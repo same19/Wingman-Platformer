@@ -16,7 +16,7 @@ GRAVITY = 1
 JUMP_STRENGTH = 20
 GLIDE_CONSTANT = 5
 GLIDE_VELOCITY_Y = 1
-BOUNCE_DELAY = 50
+BOUNCE_DELAY = 20
 
 # Colors
 WHITE = (255, 255, 255)
@@ -93,7 +93,7 @@ class Player(pygame.sprite.Sprite):
         if not self.jumping and pygame.time.get_ticks() - self.last_time_touched_ground > BOUNCE_DELAY:
             self.velocity_y = -JUMP_STRENGTH
             self.jumping = True
-        elif self.velocity_y >= 0:
+        elif self.velocity_y >= -1:
             self.gliding = True
             self.velocity_y = GLIDE_VELOCITY_Y
     def unjump(self):
@@ -102,13 +102,14 @@ class Player(pygame.sprite.Sprite):
 class Obstacle(pygame.sprite.Sprite):
     def __init__(self, is_top_obstacle):
         super().__init__()
-        self.height = random.randint(50, 120)
         if is_top_obstacle:
+            self.height = random.randint(70, 120)
             self.image = generate_rock_texture(OBSTACLE_WIDTH, self.height)
             self.rect = self.image.get_rect()
             self.rect.x = WIDTH
             self.rect.y = 0  # Top obstacle starts at the top of the screen
         else:
+            self.height = random.randint(50, 120)
             self.image = generate_rock_texture(OBSTACLE_WIDTH, self.height)
             self.rect = self.image.get_rect()
             self.rect.x = WIDTH
@@ -182,9 +183,10 @@ def run():
 
     all_sprites = pygame.sprite.Group()
     obstacles = pygame.sprite.Group()
+    player_group = pygame.sprite.Group()
 
     player = Player()
-    all_sprites.add(player)
+    player_group.add(player)
 
     clock = pygame.time.Clock()
     running = True
@@ -209,11 +211,12 @@ def run():
                 if event.key == pygame.K_SPACE or event.key == pygame.K_UP:
                     player.unjump()  # Space button is released after a hold
                     space_held = False
-            if space_held and pygame.time.get_ticks() - space_pressed_time > 10:  # Check if space was held for less than 10 ms
+            if space_held and pygame.time.get_ticks() - space_pressed_time > 5:  # Check if space was held for less than 10 ms
                 player.jump()
 
 
         all_sprites.update()
+        player_group.update()
         obstacles.update()
 
         # Add obstacles
@@ -238,6 +241,7 @@ def run():
         #pygame.draw.rect(screen, (0, 0, 0), [0, HEIGHT - GROUND_HEIGHT, WIDTH, GROUND_HEIGHT])
 
         all_sprites.draw(screen)
+        player_group.draw(screen)
 
         pygame.display.flip()
         clock.tick(60)
@@ -253,6 +257,7 @@ def run():
         #pygame.draw.rect(screen, (0, 0, 0), [0, HEIGHT - GROUND_HEIGHT, WIDTH, GROUND_HEIGHT])
 
         all_sprites.draw(screen)
+        player_group.draw(screen)
         pygame.display.flip()
         clock.tick(60)
     clock.tick(60)
