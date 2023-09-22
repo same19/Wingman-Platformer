@@ -24,22 +24,37 @@ GREEN = (0, 255, 0)
 class Player(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
-        self.image = pygame.Surface([PLAYER_WIDTH, PLAYER_HEIGHT])
-        self.image.fill(RED)
+        self.frames = [
+            pygame.image.load('stick_run1.png').convert_alpha(),
+            pygame.image.load('stick_run2.png').convert_alpha()
+        ]
+        self.current_frame = 0
+        self.image = self.frames[self.current_frame]
         self.rect = self.image.get_rect()
         self.rect.x = 50
-        self.rect.y = HEIGHT - GROUND_HEIGHT - PLAYER_HEIGHT
+        self.rect.y = HEIGHT - GROUND_HEIGHT - self.rect.height
         self.velocity_y = 0
         self.jumping = False
+        self.animation_time = 0
+        self.mask = pygame.mask.from_surface(self.image)
 
     def update(self):
         self.velocity_y += GRAVITY
         self.rect.y += self.velocity_y
+        self.mask = pygame.mask.from_surface(self.image)
 
         # Ground collision
-        if self.rect.y > HEIGHT - GROUND_HEIGHT - PLAYER_HEIGHT:
-            self.rect.y = HEIGHT - GROUND_HEIGHT - PLAYER_HEIGHT
+        if self.rect.y > HEIGHT - GROUND_HEIGHT - self.rect.height:
+            self.rect.y = HEIGHT - GROUND_HEIGHT - self.rect.height
             self.jumping = False
+
+        # Animation
+        self.animation_time += 1
+        if self.animation_time > 10:  # Adjust this value to change animation speed
+            self.animation_time = 0
+            self.current_frame = (self.current_frame + 1) % len(self.frames)
+            self.image = self.frames[self.current_frame]
+
 
     def jump(self):
         if not self.jumping:
@@ -49,11 +64,11 @@ class Player(pygame.sprite.Sprite):
 class Obstacle(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
-        self.image = pygame.Surface([OBSTACLE_WIDTH, OBSTACLE_HEIGHT])
-        self.image.fill(GREEN)
+        self.image = generate_rock_texture(OBSTACLE_WIDTH, OBSTACLE_HEIGHT)
         self.rect = self.image.get_rect()
         self.rect.x = WIDTH
         self.rect.y = HEIGHT - GROUND_HEIGHT - OBSTACLE_HEIGHT
+        self.mask = pygame.mask.from_surface(self.image)
 
     def update(self):
         self.rect.x -= SPEED
@@ -71,9 +86,39 @@ def generate_ground_texture(width, height):
 
     return texture
 
+def generate_rock_texture(width, height):
+    texture = pygame.Surface((width, height))
+    colors = [(105, 105, 105), (128, 128, 128), (169, 169, 169)]  # Different shades of grey for rock
+
+    for x in range(width):
+        for y in range(height):
+            random_color = random.choice(colors)
+            texture.set_at((x, y), random_color)
+
+    return texture
+
+def generate_sky_texture(width, height):
+    texture = pygame.Surface((width, height))
+    top_color = (135, 206, 235)  # Sky blue
+    bottom_color = (240, 248, 255)  # Alice blue
+
+    for y in range(height):
+        alpha = y / height
+        color = (
+            int((1 - alpha) * top_color[0] + alpha * bottom_color[0]),
+            int((1 - alpha) * top_color[1] + alpha * bottom_color[1]),
+            int((1 - alpha) * top_color[2] + alpha * bottom_color[2])
+        )
+        texture.fill(color, (0, y, width, 1))
+
+    return texture
+
 def main():
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption("Platformer Game")
+
+    sky_texture = generate_sky_texture(WIDTH, HEIGHT)
+    ground_texture = generate_ground_texture(WIDTH, GROUND_HEIGHT)
 
     all_sprites = pygame.sprite.Group()
     obstacles = pygame.sprite.Group()
@@ -84,8 +129,6 @@ def main():
     clock = pygame.time.Clock()
     running = True
     obstacle_timer = 0
-
-    ground_texture = generate_ground_texture(WIDTH, GROUND_HEIGHT)
 
     while running:
         for event in pygame.event.get():
@@ -107,11 +150,11 @@ def main():
             obstacle_timer = 0
 
         # Check for collisions
-        if pygame.sprite.spritecollide(player, obstacles, False):
+        if pygame.sprite.spritecollide(player, obstacles, False, pygame.sprite.collide_mask):
             running = False
 
         # Draw everything
-        screen.fill(WHITE)
+        screen.blit(sky_texture, (0, 0))
         screen.blit(ground_texture, (0, HEIGHT - GROUND_HEIGHT))
         #pygame.draw.rect(screen, (0, 0, 0), [0, HEIGHT - GROUND_HEIGHT, WIDTH, GROUND_HEIGHT])
 
