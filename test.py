@@ -60,6 +60,17 @@ class Obstacle(pygame.sprite.Sprite):
         if self.rect.x < -OBSTACLE_WIDTH:
             self.kill()
 
+def generate_ground_texture(width, height):
+    texture = pygame.Surface((width, height))
+    colors = [(139, 69, 19), (160, 82, 45), (185, 102, 58)]  # Different shades of brown for dirt
+
+    for x in range(width):
+        for y in range(height):
+            random_color = random.choice(colors)
+            texture.set_at((x, y), random_color)
+
+    return texture
+
 def main():
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption("Platformer Game")
@@ -73,6 +84,8 @@ def main():
     clock = pygame.time.Clock()
     running = True
     obstacle_timer = 0
+
+    ground_texture = generate_ground_texture(WIDTH, GROUND_HEIGHT)
 
     while running:
         for event in pygame.event.get():
@@ -99,7 +112,9 @@ def main():
 
         # Draw everything
         screen.fill(WHITE)
-        pygame.draw.rect(screen, (0, 0, 0), [0, HEIGHT - GROUND_HEIGHT, WIDTH, GROUND_HEIGHT])
+        screen.blit(ground_texture, (0, HEIGHT - GROUND_HEIGHT))
+        #pygame.draw.rect(screen, (0, 0, 0), [0, HEIGHT - GROUND_HEIGHT, WIDTH, GROUND_HEIGHT])
+
         all_sprites.draw(screen)
 
         pygame.display.flip()
