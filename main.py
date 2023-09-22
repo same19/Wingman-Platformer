@@ -49,7 +49,11 @@ class Player(pygame.sprite.Sprite):
         self.dropping = False
         self.glide_velocity_y = 1  # Adjust glide speed as needed
         self.last_time_touched_ground = 0
-        
+        self.animate = True
+    def turn_on_animation(self):
+        self.animate = True
+    def turn_off_animation(self):
+        self.animate = False
     def touching_ground(self):
         return self.rect.y > HEIGHT - GROUND_HEIGHT - self.rect.height
     def update(self):
@@ -57,11 +61,6 @@ class Player(pygame.sprite.Sprite):
             self.velocity_y += 2*GRAVITY
         if not self.gliding:
             self.velocity_y += GRAVITY
-
-        # Check if the player is pressing the spacebar to glide
-        keys = pygame.key.get_pressed()
-        # if self.jumping and keys[pygame.K_SPACE]:
-            # self.velocity_y += self.glide_velocity_y  # Add glide velocity
 
         self.rect.y += self.velocity_y
         # Ground collision
@@ -77,7 +76,8 @@ class Player(pygame.sprite.Sprite):
         self.animation_time += 1
         if self.animation_time > 10:  # Adjust this value to change animation speed
             self.animation_time = 0
-            self.current_frame = (self.current_frame + 1) % len(self.frames)
+            if self.animate:
+                self.current_frame = (self.current_frame + 1) % len(self.frames)
             if self.gliding:
                 self.set_image(self.gliding_frames[self.current_frame])
                 self.rect = self.image.get_rect(center=self.rect.center)
@@ -173,7 +173,7 @@ def generate_sky_texture(width, height):
 
     return texture
 
-def main():
+def run():
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption("Platformer Game")
 
@@ -197,6 +197,7 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+                return -1
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE or event.key == pygame.K_UP:
                     space_pressed_time = pygame.time.get_ticks()  # Record the time when space is pressed
@@ -240,11 +241,28 @@ def main():
 
         pygame.display.flip()
         clock.tick(60)
-    clock.tick(1)
-    pygame.quit()
+    current_time = pygame.time.get_ticks()
+    end_time = 1000
+    while pygame.time.get_ticks() - current_time < end_time:
+        player.unjump()
+        player.turn_off_animation()
+        player.update()
+        # Draw everything
+        screen.blit(sky_texture, (0, 0))
+        screen.blit(ground_texture, (0, HEIGHT - GROUND_HEIGHT))
+        #pygame.draw.rect(screen, (0, 0, 0), [0, HEIGHT - GROUND_HEIGHT, WIDTH, GROUND_HEIGHT])
+
+        all_sprites.draw(screen)
+        pygame.display.flip()
+        clock.tick(60)
+    clock.tick(60)
+    # pygame.quit()
+    return 0
 
 if __name__ == "__main__":
-    main()
+    restart = 0
+    while restart == 0:
+        restart = run()
 
 
 
