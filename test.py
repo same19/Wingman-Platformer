@@ -15,6 +15,7 @@ OBSTACLE_HEIGHT = 50
 SPEED = 5
 GRAVITY = 1
 JUMP_STRENGTH = 15
+GLIDE_CONSTANT = 50
 
 # Colors
 WHITE = (255, 255, 255)
@@ -31,20 +32,36 @@ class Player(pygame.sprite.Sprite):
         self.rect.y = HEIGHT - GROUND_HEIGHT - PLAYER_HEIGHT
         self.velocity_y = 0
         self.jumping = False
+        self.gliding = False  # Added gliding state
+        self.glide_velocity_y = 1  # Adjust glide speed as needed
 
     def update(self):
-        self.velocity_y += GRAVITY
+        if self.gliding and self.velocity_y > 0:
+            self.velocity_y += GRAVITY/GLIDE_CONSTANT
+        else:
+            self.velocity_y += GRAVITY
+
+        # Check if the player is pressing the spacebar to glide
+        keys = pygame.key.get_pressed()
+        # if self.jumping and keys[pygame.K_SPACE]:
+            # self.velocity_y += self.glide_velocity_y  # Add glide velocity
+
         self.rect.y += self.velocity_y
 
         # Ground collision
         if self.rect.y > HEIGHT - GROUND_HEIGHT - PLAYER_HEIGHT:
             self.rect.y = HEIGHT - GROUND_HEIGHT - PLAYER_HEIGHT
             self.jumping = False
+            self.gliding = False  # Reset gliding state when touching the ground
 
     def jump(self):
         if not self.jumping:
             self.velocity_y = -JUMP_STRENGTH
             self.jumping = True
+        else:
+            self.gliding = True
+    def unjump(self):
+        self.gliding = False
 
 class Obstacle(pygame.sprite.Sprite):
     def __init__(self):
@@ -73,15 +90,20 @@ def main():
     clock = pygame.time.Clock()
     running = True
     obstacle_timer = 0
-
+    space_held = False
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
-                    player.jump()
-
+                    space_held = True  # Space button is being held
+            elif event.type == pygame.KEYUP:
+                if event.key == pygame.K_SPACE:
+                    space_held = False  # Space button is released
+                    player.unjump()
+            if space_held == True:
+                player.jump()
         all_sprites.update()
         obstacles.update()
 
@@ -111,6 +133,6 @@ if __name__ == "__main__":
     main()
 
 
-
+#File created using ChatGPT
 # base ChatGPT Prompt:
 #We are creating a platform game with obstacles where the individual can run and jump. Please code a simple platformer with object oriented python where the user is perpetually running when they're not jumping. It should use pygame. 
