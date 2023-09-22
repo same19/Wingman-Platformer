@@ -14,7 +14,9 @@ OBSTACLE_WIDTH = 50
 OBSTACLE_HEIGHT = 50
 SPEED = 5
 GRAVITY = 1
-JUMP_STRENGTH = 15
+JUMP_STRENGTH = 20
+GLIDE_CONSTANT = 5
+GLIDE_VELOCITY_Y = 1
 
 # Colors
 WHITE = (255, 255, 255)
@@ -28,6 +30,7 @@ class Player(pygame.sprite.Sprite):
             pygame.image.load('assets/stick_run1.png').convert_alpha(),
             pygame.image.load('assets/stick_run2.png').convert_alpha()
         ]
+        self.gliding_image = pygame.transform.rotate(self.frames[0], -90)
         self.current_frame = 0
         self.image = self.frames[self.current_frame]
         self.rect = self.image.get_rect()
@@ -37,29 +40,48 @@ class Player(pygame.sprite.Sprite):
         self.jumping = False
         self.animation_time = 0
         self.mask = pygame.mask.from_surface(self.image)
+        self.gliding = False  # Added gliding state
+        self.glide_velocity_y = 1  # Adjust glide speed as needed
 
     def update(self):
-        self.velocity_y += GRAVITY
+        if not self.gliding:
+            self.velocity_y += GRAVITY
+
+        # Check if the player is pressing the spacebar to glide
+        keys = pygame.key.get_pressed()
+        # if self.jumping and keys[pygame.K_SPACE]:
+            # self.velocity_y += self.glide_velocity_y  # Add glide velocity
+
         self.rect.y += self.velocity_y
-        self.mask = pygame.mask.from_surface(self.image)
 
         # Ground collision
-        if self.rect.y > HEIGHT - GROUND_HEIGHT - self.rect.height:
-            self.rect.y = HEIGHT - GROUND_HEIGHT - self.rect.height
+        if self.rect.y > HEIGHT - 3*GROUND_HEIGHT - PLAYER_HEIGHT: #need 3x for some reason???
+            self.rect.y = HEIGHT - 3*GROUND_HEIGHT - PLAYER_HEIGHT
             self.jumping = False
-
+            self.gliding = False  # Reset gliding state when touching the ground
+        
         # Animation
         self.animation_time += 1
         if self.animation_time > 10:  # Adjust this value to change animation speed
             self.animation_time = 0
             self.current_frame = (self.current_frame + 1) % len(self.frames)
-            self.image = self.frames[self.current_frame]
+            if self.gliding:
+                self.image = self.gliding_image
+                self.rect = self.image.get_rect(center=self.rect.center)
+            else:
+                self.image = self.frames[self.current_frame]
+                self.rect = self.image.get_rect(center = self.rect.center)
 
 
     def jump(self):
         if not self.jumping:
             self.velocity_y = -JUMP_STRENGTH
             self.jumping = True
+        else:
+            self.gliding = True
+            self.velocity_y = GLIDE_VELOCITY_Y
+    def unjump(self):
+        self.gliding = False
 
 class Obstacle(pygame.sprite.Sprite):
     def __init__(self):
@@ -129,6 +151,7 @@ def main():
     clock = pygame.time.Clock()
     running = True
     obstacle_timer = 0
+    space_held = False
 
     while running:
         for event in pygame.event.get():
@@ -136,7 +159,16 @@ def main():
                 running = False
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
+                    space_pressed_time = pygame.time.get_ticks()  # Record the time when space is pressed
+                    space_held = True
                     player.jump()
+            elif event.type == pygame.KEYUP:
+                if event.key == pygame.K_SPACE:
+                    player.unjump()  # Space button is released after a hold
+                    space_held = False
+            if space_held and pygame.time.get_ticks() - space_pressed_time > 10:  # Check if space was held for less than 10 ms
+                player.jump()
+
 
         all_sprites.update()
         obstacles.update()
@@ -162,7 +194,7 @@ def main():
 
         pygame.display.flip()
         clock.tick(60)
-
+    clock.tick(1)
     pygame.quit()
 
 if __name__ == "__main__":
