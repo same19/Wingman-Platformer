@@ -11,12 +11,13 @@ GROUND_HEIGHT = 50
 PLAYER_WIDTH = 40
 PLAYER_HEIGHT = 60
 OBSTACLE_WIDTH = 50
-OBSTACLE_HEIGHT = 50
+OBSTACLE_HEIGHT = 80
 SPEED = 5
 GRAVITY = 1
 JUMP_STRENGTH = 20
 GLIDE_CONSTANT = 5
 GLIDE_VELOCITY_Y = 1
+BOUNCE_DELAY = 300
 
 # Colors
 WHITE = (255, 255, 255)
@@ -30,6 +31,7 @@ class Player(pygame.sprite.Sprite):
             pygame.image.load('assets/stick_run1.png').convert_alpha(),
             pygame.image.load('assets/stick_run2.png').convert_alpha()
         ]
+        #NEED TO CROP IMAGES SO THE HITBOXES ARE SMALLER
         self.gliding_image = pygame.transform.rotate(self.frames[0], -90)
         self.current_frame = 0
         self.image = self.frames[self.current_frame]
@@ -42,7 +44,9 @@ class Player(pygame.sprite.Sprite):
         self.mask = pygame.mask.from_surface(self.image)
         self.gliding = False  # Added gliding state
         self.glide_velocity_y = 1  # Adjust glide speed as needed
-
+        self.last_time_touched_ground = 0
+    def touching_ground(self):
+        return self.rect.y > HEIGHT - 3*GROUND_HEIGHT - PLAYER_HEIGHT
     def update(self):
         if not self.gliding:
             self.velocity_y += GRAVITY
@@ -53,9 +57,10 @@ class Player(pygame.sprite.Sprite):
             # self.velocity_y += self.glide_velocity_y  # Add glide velocity
 
         self.rect.y += self.velocity_y
-
         # Ground collision
-        if self.rect.y > HEIGHT - 3*GROUND_HEIGHT - PLAYER_HEIGHT: #need 3x for some reason???
+        if self.touching_ground(): #need 3x for some reason???
+            if self.jumping:
+                self.last_time_touched_ground = pygame.time.get_ticks()
             self.rect.y = HEIGHT - 3*GROUND_HEIGHT - PLAYER_HEIGHT
             self.jumping = False
             self.gliding = False  # Reset gliding state when touching the ground
@@ -74,7 +79,7 @@ class Player(pygame.sprite.Sprite):
 
 
     def jump(self):
-        if not self.jumping:
+        if not self.jumping and pygame.time.get_ticks() - self.last_time_touched_ground > BOUNCE_DELAY:
             self.velocity_y = -JUMP_STRENGTH
             self.jumping = True
         else:
@@ -152,7 +157,7 @@ def main():
     running = True
     obstacle_timer = 0
     space_held = False
-
+    global space_pressed_time
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
