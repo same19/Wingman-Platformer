@@ -25,8 +25,8 @@ class Player(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
         self.frames = [
-            pygame.image.load('stick_run1.png').convert_alpha(),
-            pygame.image.load('stick_run2.png').convert_alpha()
+            pygame.image.load('assets/stick_run1.png').convert_alpha(),
+            pygame.image.load('assets/stick_run2.png').convert_alpha()
         ]
         self.current_frame = 0
         self.image = self.frames[self.current_frame]
