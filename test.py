@@ -14,8 +14,9 @@ OBSTACLE_WIDTH = 50
 OBSTACLE_HEIGHT = 50
 SPEED = 5
 GRAVITY = 1
-JUMP_STRENGTH = 15
-GLIDE_CONSTANT = 50
+JUMP_STRENGTH = 20
+GLIDE_CONSTANT = 5
+GLIDE_VELOCITY_Y = 1
 
 # Colors
 WHITE = (255, 255, 255)
@@ -25,8 +26,9 @@ GREEN = (0, 255, 0)
 class Player(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
-        self.image = pygame.Surface([PLAYER_WIDTH, PLAYER_HEIGHT])
-        self.image.fill(RED)
+        self.original_image = pygame.Surface([PLAYER_WIDTH, PLAYER_HEIGHT])
+        self.original_image.fill(RED)
+        self.image = self.original_image
         self.rect = self.image.get_rect()
         self.rect.x = 50
         self.rect.y = HEIGHT - GROUND_HEIGHT - PLAYER_HEIGHT
@@ -36,9 +38,12 @@ class Player(pygame.sprite.Sprite):
         self.glide_velocity_y = 1  # Adjust glide speed as needed
 
     def update(self):
-        if self.gliding and self.velocity_y > 0:
-            self.velocity_y += GRAVITY/GLIDE_CONSTANT
+        if self.gliding:
+            self.image = pygame.transform.rotate(self.original_image, 90)
         else:
+            self.image = self.original_image
+
+        if not self.gliding:
             self.velocity_y += GRAVITY
 
         # Check if the player is pressing the spacebar to glide
@@ -60,6 +65,7 @@ class Player(pygame.sprite.Sprite):
             self.jumping = True
         else:
             self.gliding = True
+            self.velocity_y = GLIDE_VELOCITY_Y
     def unjump(self):
         self.gliding = False
 
@@ -97,12 +103,14 @@ def main():
                 running = False
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
-                    space_held = True  # Space button is being held
+                    space_pressed_time = pygame.time.get_ticks()  # Record the time when space is pressed
+                    space_held = True
+                    player.jump()
             elif event.type == pygame.KEYUP:
                 if event.key == pygame.K_SPACE:
-                    space_held = False  # Space button is released
-                    player.unjump()
-            if space_held == True:
+                    player.unjump()  # Space button is released after a hold
+                    space_held = False
+            if space_held and pygame.time.get_ticks() - space_pressed_time > 10:  # Check if space was held for less than 10 ms
                 player.jump()
         all_sprites.update()
         obstacles.update()
