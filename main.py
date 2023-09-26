@@ -22,11 +22,10 @@ BOUNCE_DELAY = 20
 WHITE = (255, 255, 255)
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
-ground = None
 class Player(pygame.sprite.Sprite):
-    global ground
     def set_image(self, img):
         self.image = pygame.transform.scale(img, PLAYER_SCALE)
+        self.mask = pygame.mask.from_surface(self.image)
     def __init__(self):
         super().__init__()
         self.frames = [
@@ -45,21 +44,24 @@ class Player(pygame.sprite.Sprite):
         self.velocity_y = 0
         self.jumping = False
         self.animation_time = 0
-        self.mask = pygame.mask.from_surface(self.image)
         self.gliding = False  # Added gliding state
         self.dropping = False
         self.glide_velocity_y = 1  # Adjust glide speed as needed
         self.last_time_touched_ground = 0
         self.animate = True
         self.is_touching_ground = False
+        self.amount_to_move = 0
     def turn_on_animation(self):
         self.animate = True
     def turn_off_animation(self):
         self.animate = False
-    def hit_ground(self):
+    def hit_ground(self, amount_to_move):
+        self.amount_to_move = amount_to_move
         self.is_touching_ground = True
-    def touching_ground(self, dist = 0):
-        return self.is_touching_ground or self.rect.y > -dist + HEIGHT - GROUND_HEIGHT - self.rect.height
+    def unhit_ground(self):
+        self.is_touching_ground = False
+    def touching_ground(self):
+        return self.is_touching_ground or self.rect.y >= -1 + HEIGHT - GROUND_HEIGHT - self.rect.height
     def update(self):
         if self.dropping:
             self.velocity_y += 2*GRAVITY
@@ -71,12 +73,13 @@ class Player(pygame.sprite.Sprite):
         if self.touching_ground(): #need 3x for some reason???
             if self.jumping:
                 self.last_time_touched_ground = pygame.time.get_ticks()
-            self.rect.y -= self.velocity_y + GRAVITY
+            self.rect.y += self.amount_to_move
+            self.amount_to_move = 0
             self.velocity_y = -GRAVITY
             self.jumping = False
             self.dropping = False
             self.gliding = False  # Reset gliding state when touching the ground
-        self.is_touching_ground = False
+        # self.is_touching_ground = False
         
         # Animation
         self.animation_time += 1
@@ -96,11 +99,12 @@ class Player(pygame.sprite.Sprite):
         if self.jumping:
             self.dropping = True
     def new_jump(self):
-        if self.touching_ground(10) and pygame.time.get_ticks() - self.last_time_touched_ground > BOUNCE_DELAY:
+        if self.touching_ground():#and pygame.time.get_ticks() - self.last_time_touched_ground > BOUNCE_DELAY:
             self.velocity_y = -JUMP_STRENGTH
             self.jumping = True
             self.is_touching_ground = False
         else:
+            print("NOT TOUCHING GROUND")
             self.gliding = True
             self.velocity_y = GLIDE_VELOCITY_Y
     def jump(self):
@@ -190,7 +194,8 @@ def generate_sky_texture(width, height):
         texture.fill(color, (0, y, width, 1))
 
     return texture
-
+def sub(u, v):
+  return [ u[i]-v[i] for i in range(len(u)) ]
 def run():
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption("Platformer Game")
@@ -201,7 +206,7 @@ def run():
     all_sprites = pygame.sprite.Group()
     obstacles = pygame.sprite.Group()
     player_group = pygame.sprite.Group()
-    grounds = pygame.sprite.Group()
+    # grounds = pygame.sprite.Group()
 
     player = Player()
     player_group.add(player)
@@ -216,9 +221,9 @@ def run():
     all_sprites.add(obstacle_top)
     obstacles.add(obstacle_top)
 
-    ground = Obstacle('assets/ground.png')
-    grounds.add(ground)
-    all_sprites.add(ground)
+    # ground = Obstacle('assets/ground.png')
+    # grounds.add(ground)
+    # all_sprites.add(ground)
 
     space_pressed_time = 0
 
@@ -233,25 +238,22 @@ def run():
                         space_pressed_time = pygame.time.get_ticks()
                     space_held = True
                     player.new_jump()
-                    print("New jump")
                 elif event.key == pygame.K_DOWN:
                     player.drop()
             elif event.type == pygame.KEYUP:
                 if event.key == pygame.K_SPACE or event.key == pygame.K_UP:
                     player.unjump()  # Stop gliding when the key is released
                     space_held = False
-                    print("unjump")
 
         # Check for gliding outside the event loop
         if space_held and pygame.time.get_ticks() - space_pressed_time > 5 and not player.touching_ground():
             player.jump()
-            print("rejump")
 
 
         # all_sprites.update()
         player_group.update()
         obstacles.update()
-        grounds.update()
+        # grounds.update()
 
         # Add obstacles
         # obstacle_timer += 1
@@ -267,36 +269,57 @@ def run():
         #     next_obstacle_time = 150#random.randint(10, 75)
 
         # Check for collisions
-        if pygame.sprite.spritecollide(player, obstacles, False, pygame.sprite.collide_mask):
-            running = False
-        if pygame.sprite.spritecollide(player, grounds, False, pygame.sprite.collide_mask):
-            player.hit_ground()
+        # if pygame.sprite.spritecollide(player, obstacles, False, pygame.sprite.collide_mask):
+        #     running = False
+        # if pygame.sprite.spritecollide(player, grounds, False, pygame.sprite.collide_mask):
+        #     player.hit_ground()
         
         # Assuming you have a player and an obstacle sprite
         player_mask = player.mask
-        obstacle_mask = ground.mask
+        obstacle_mask = obstacle_top.mask
 
         # Calculate the offset between the two sprites
-        offset_x = ground.rect.x - player.rect.x
-        offset_y = ground.rect.y - player.rect.y
+        offset_x = player.rect.x - obstacle_top.rect.x
+        offset_y = player.rect.y - obstacle_top.rect.y
 
         # Check for collision
-        if pygame.sprite.collide_mask(player, ground):
-            # Get the first overlap point
-            overlap_point = player_mask.overlap(obstacle_mask, (offset_x, offset_y))
-            
-            if overlap_point:
-                screen_x = overlap_point[0] + player.rect.x
+        overlap_surf = ground_texture
+        if pygame.sprite.collide_mask(player, obstacle_top):
+            print("Collision")
+            offset = (offset_x, offset_y)
+            # overlap_mask = mask1.overlap_mask(mask2, (offset_x, offset_y))
+            collide = obstacle_top.mask.overlap_mask(player.mask, offset)
+            # collide_pt = (collide[0] + obstacle_top.rect.x - player.rect.x, collide[1]+obstacle_top.rect.y - player.rect.y)
+            overlap_surf = collide.to_surface(setcolor = (255, 0, 0))
+            overlap_surf.set_colorkey((0, 0, 0))
+            net_col_shift = sub(sub(collide.centroid(),offset),player.mask.centroid())
+            print(net_col_shift)
+            player.rect.height
+            if net_col_shift[0] > 1 and net_col_shift[1] < player.rect.height/4:
+                print(net_col_shift)
+                print("Death collision")
+                running = False
+            else:
+                print("Top collision")
+                overlap_point = pygame.sprite.collide_mask(player, obstacle_top)
                 screen_y = overlap_point[1] + player.rect.y
-                print(f"Collision point in screen coordinates: ({screen_x}, {screen_y})")
-
+                player.hit_ground(screen_y - player.rect.bottom)
+        elif pygame.sprite.collide_mask(player, ground_texture):
+            print("Top collision")
+            overlap_point = pygame.sprite.collide_mask(player, ground_texture)
+            screen_y = overlap_point[1] + player.rect.y
+            player.hit_ground(screen_y - player.rect.bottom)
+        else:
+            player.unhit_ground()
         # Draw everything
         screen.blit(sky_texture, (0, 0))
         screen.blit(ground_texture, (0, HEIGHT - GROUND_HEIGHT))
+        
         #pygame.draw.rect(screen, (0, 0, 0), [0, HEIGHT - GROUND_HEIGHT, WIDTH, GROUND_HEIGHT])
-        grounds.draw(screen)
+        # grounds.draw(screen)
         all_sprites.draw(screen)
         player_group.draw(screen)
+        screen.blit(overlap_surf, obstacle_top.rect)
 
         pygame.display.flip()
         clock.tick(60)
@@ -305,7 +328,7 @@ def run():
     while pygame.time.get_ticks() - current_time < end_time:
         player.unjump()
         player.turn_off_animation()
-        player.update()
+        # player.update()
         # Draw everything
         screen.blit(sky_texture, (0, 0))
         screen.blit(ground_texture, (0, HEIGHT - GROUND_HEIGHT))
