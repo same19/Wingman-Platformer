@@ -271,6 +271,24 @@ def run():
             running = False
         if pygame.sprite.spritecollide(player, grounds, False, pygame.sprite.collide_mask):
             player.hit_ground()
+        
+        # Assuming you have a player and an obstacle sprite
+        player_mask = player.mask
+        obstacle_mask = ground.mask
+
+        # Calculate the offset between the two sprites
+        offset_x = ground.rect.x - player.rect.x
+        offset_y = ground.rect.y - player.rect.y
+
+        # Check for collision
+        if pygame.sprite.collide_mask(player, ground):
+            # Get the first overlap point
+            overlap_point = player_mask.overlap(obstacle_mask, (offset_x, offset_y))
+            
+            if overlap_point:
+                screen_x = overlap_point[0] + player.rect.x
+                screen_y = overlap_point[1] + player.rect.y
+                print(f"Collision point in screen coordinates: ({screen_x}, {screen_y})")
 
         # Draw everything
         screen.blit(sky_texture, (0, 0))
