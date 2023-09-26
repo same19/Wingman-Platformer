@@ -228,22 +228,24 @@ def run():
                 running = False
                 return -1
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_SPACE or event.key == pygame.K_RIGHT:
-                    space_pressed_time = pygame.time.get_ticks()  # Record the time when space is pressed
+                if event.key == pygame.K_SPACE or event.key == pygame.K_UP:
+                    if not space_held:  # Only record the time of the initial key press
+                        space_pressed_time = pygame.time.get_ticks()
                     space_held = True
                     player.new_jump()
                     print("New jump")
                 elif event.key == pygame.K_DOWN:
                     player.drop()
             elif event.type == pygame.KEYUP:
-                print(space_held)
-                if event.key == pygame.K_SPACE or event.key == pygame.K_RIGHT:
-                    print("unjump")
-                    player.unjump()  # Space button is released after a hold
+                if event.key == pygame.K_SPACE or event.key == pygame.K_UP:
+                    player.unjump()  # Stop gliding when the key is released
                     space_held = False
-            if space_held and pygame.time.get_ticks() - space_pressed_time > 5:  # Check if space was held for less than 5 ms
-                player.jump()
-                print("rejump")
+                    print("unjump")
+
+        # Check for gliding outside the event loop
+        if space_held and pygame.time.get_ticks() - space_pressed_time > 5 and not player.touching_ground():
+            player.jump()
+            print("rejump")
 
 
         # all_sprites.update()
