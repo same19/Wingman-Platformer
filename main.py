@@ -108,12 +108,13 @@ class Player(pygame.sprite.Sprite):
             self.gliding = True
             self.velocity_y = GLIDE_VELOCITY_Y
     def jump(self):
+        self.dropping = False
         # if self.touching_ground(5) and not self.jumping and pygame.time.get_ticks() - self.last_time_touched_ground > BOUNCE_DELAY:
         #     self.velocity_y = -JUMP_STRENGTH
         #     self.jumping = True
         #     self.is_touching_ground = False
         # el
-        if self.velocity_y >= -1:
+        if self.velocity_y >= 0:
             self.gliding = True
             self.velocity_y = GLIDE_VELOCITY_Y
     def unjump(self):
@@ -125,10 +126,10 @@ class Obstacle(pygame.sprite.Sprite):
         # if is_top_obstacle:
         self.height = random.randint(70, 120)
         self.image = generate_rock_texture(OBSTACLE_WIDTH, self.height)
-        self.image = pygame.transform.scale(pygame.image.load(img).convert_alpha(), (WIDTH*3, HEIGHT*1.2))
+        self.image = pygame.transform.scale(pygame.image.load(img).convert_alpha(), (WIDTH*3, HEIGHT*1.1))
         self.rect = self.image.get_rect()
-        self.rect.x = WIDTH
-        self.rect.y = -0.2*HEIGHT  # Top obstacle starts at the top of the screen
+        self.rect.x = 0
+        self.rect.y = 0  # Top obstacle starts at the top of the screen
         # else:
         #     self.height = random.randint(50, 120)
         #     self.image = generate_rock_texture(OBSTACLE_WIDTH, self.height)
@@ -288,13 +289,10 @@ def run():
         
         # Draw everything
         screen.blit(sky_texture, (0, 0))
-        screen.blit(ground_texture, (0, HEIGHT - GROUND_HEIGHT))
-        
-        #pygame.draw.rect(screen, (0, 0, 0), [0, HEIGHT - GROUND_HEIGHT, WIDTH, GROUND_HEIGHT])
-        # grounds.draw(screen)
         all_sprites.draw(screen)
         player_group.draw(screen)
-        screen.blit(overlap_surf, obstacle_top.rect)
+        screen.blit(ground_texture, (0, HEIGHT - GROUND_HEIGHT))
+        # screen.blit(overlap_surf, obstacle_top.rect)
 
         pygame.display.flip()
         clock.tick(60)
@@ -306,11 +304,12 @@ def run():
         # player.update()
         # Draw everything
         screen.blit(sky_texture, (0, 0))
+        all_sprites.draw(screen)
+        player_group.draw(screen)
         screen.blit(ground_texture, (0, HEIGHT - GROUND_HEIGHT))
         #pygame.draw.rect(screen, (0, 0, 0), [0, HEIGHT - GROUND_HEIGHT, WIDTH, GROUND_HEIGHT])
 
-        all_sprites.draw(screen)
-        player_group.draw(screen)
+        
         pygame.display.flip()
         clock.tick(60)
     clock.tick(60)
