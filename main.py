@@ -30,7 +30,7 @@ class Player(pygame.sprite.Sprite):
         super().__init__()
         self.collision_function = collision_function
         self.frames = [
-            pygame.image.load('assets/stick_run1.png').convert_alpha(),#MIGHT NEED TO CROP IMAGES SO THE HITBOXES ARE SMALLER
+            pygame.image.load('assets/stick_run1.png').convert_alpha(),
             pygame.image.load('assets/stick_run2.png').convert_alpha()
         ]
         self.gliding_frames = [
@@ -121,12 +121,14 @@ class Player(pygame.sprite.Sprite):
         self.gliding = False
 
 class Obstacle(pygame.sprite.Sprite):
-    def __init__(self, img = 'assets/obstacles.png'):
+    def __init__(self, img = 'assets/level_1.png'):
         super().__init__()
         # if is_top_obstacle:
+        self.win_function = lambda:None
         self.height = random.randint(70, 120)
-        self.image = generate_rock_texture(OBSTACLE_WIDTH, self.height)
-        self.image = pygame.transform.scale(pygame.image.load(img).convert_alpha(), (WIDTH*3, HEIGHT*1.1))
+        # self.image = generate_rock_texture(OBSTACLE_WIDTH, self.height)
+        self.scale = (WIDTH*3, HEIGHT*1.1)
+        self.image = pygame.transform.scale(pygame.image.load(img).convert_alpha(), self.scale)
         self.rect = self.image.get_rect()
         self.rect.x = 0
         self.rect.y = 0  # Top obstacle starts at the top of the screen
@@ -141,22 +143,9 @@ class Obstacle(pygame.sprite.Sprite):
 
     def update(self):
         self.rect.x -= SPEED
-        # if self.rect.x < -OBSTACLE_WIDTH:
-        #     self.kill()
-
-            
-    # def __init__(self):
-    #     super().__init__()
-    #     self.image = generate_rock_texture(OBSTACLE_WIDTH, OBSTACLE_HEIGHT)
-    #     self.rect = self.image.get_rect()
-    #     self.rect.x = WIDTH
-    #     self.rect.y = HEIGHT - GROUND_HEIGHT - OBSTACLE_HEIGHT
-    #     self.mask = pygame.mask.from_surface(self.image)
-
-    # def update(self):
-    #     self.rect.x -= SPEED
-    #     if self.rect.x < -OBSTACLE_WIDTH:
-    #         self.kill()
+        if self.rect.x < -self.scale[0]:
+            self.win_function()
+            self.kill()
 
 def generate_ground_texture(width, height):
     texture = pygame.Surface((width, height))
@@ -197,7 +186,11 @@ def generate_sky_texture(width, height):
     return texture
 def sub(u, v):
   return [ u[i]-v[i] for i in range(len(u)) ]
+running = True
+state = 0
 def run():
+    global running
+    running = True
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption("Platformer Game")
 
@@ -208,7 +201,13 @@ def run():
     obstacles = pygame.sprite.Group()
     player_group = pygame.sprite.Group()
     # grounds = pygame.sprite.Group()
-    obstacle_top = Obstacle('assets/obstacles.png')
+    obstacle_top = Obstacle('assets/level_1.png')
+    def temp():
+        global running
+        global state
+        running = False
+        state = 1 #win
+    obstacle_top.win_function = temp
     all_sprites.add(obstacle_top)
     obstacles.add(obstacle_top)
     def check_collide(running = True):
@@ -247,7 +246,6 @@ def run():
     player_group.add(player)
 
     clock = pygame.time.Clock()
-    running = True
     obstacle_timer = 0
     space_held = False
     next_obstacle_time = 50
@@ -298,10 +296,12 @@ def run():
         clock.tick(60)
     current_time = pygame.time.get_ticks()
     end_time = 1000
+    if state == 1:
+        print("You win!")
     while pygame.time.get_ticks() - current_time < end_time:
         player.unjump()
         player.turn_off_animation()
-        # player.update()
+        player.update()
         # Draw everything
         screen.blit(sky_texture, (0, 0))
         all_sprites.draw(screen)
