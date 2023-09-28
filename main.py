@@ -3,6 +3,7 @@ import random
 
 # Initialize pygame
 pygame.init()
+pygame.mixer.init()
 
 # Constants
 WIDTH = 800
@@ -321,6 +322,9 @@ def run():
 
 if __name__ == "__main__":
     restart = 0
+    pygame.mixer.music.load('assets/soundtrack.mp3')  
+    pygame.mixer.music.play(-1)
+
     while restart == 0:
         restart = run()
 
