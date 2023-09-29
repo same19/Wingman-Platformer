@@ -244,8 +244,6 @@ def run(level_name, clock):
     obstacles.add(obstacle_top)
 
     def check_collide(running=True):
-        player_mask = player.mask
-        obstacle_mask = obstacle_top.mask
         offset_x = player.rect.x - obstacle_top.rect.x
         offset_y = player.rect.y - obstacle_top.rect.y
 
@@ -276,7 +274,6 @@ def run(level_name, clock):
     space_held = False
     back_buffer = pygame.Surface((WIDTH, HEIGHT))
 
-    last_time = pygame.time.get_ticks()
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -309,7 +306,6 @@ def run(level_name, clock):
 
         screen.blit(back_buffer, (0,0))
         pygame.display.flip()
-        last_time = pygame.time.get_ticks()
         clock.tick(FRAME_RATE)
 
     current_time = pygame.time.get_ticks()
