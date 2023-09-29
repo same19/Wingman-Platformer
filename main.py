@@ -8,11 +8,7 @@ pygame.init()
 # Constants
 WIDTH = 800
 HEIGHT = 400
-<<<<<<< Updated upstream
-GROUND_HEIGHT = 50
-=======
 GROUND_HEIGHT = 200
->>>>>>> Stashed changes
 PLAYER_SCALE = (80, 100)
 OBSTACLE_WIDTH = 50
 OBSTACLE_HEIGHT = 80
@@ -161,14 +157,9 @@ class Obstacle(pygame.sprite.Sprite):
         super().__init__()
         # if is_top_obstacle:
         self.height = random.randint(70, 120)
-<<<<<<< Updated upstream
-        self.image = generate_rock_texture(OBSTACLE_WIDTH, self.height)
-        self.image = pygame.transform.scale(pygame.image.load(img).convert_alpha(), (WIDTH*3, HEIGHT*1.2))
-=======
         # self.image = generate_rock_texture(OBSTACLE_WIDTH, self.height)
         self.scale = (HEIGHT*10, HEIGHT)
         self.image = pygame.transform.scale(generate_obstacle_texture(pygame.image.load(img).convert_alpha()), self.scale)
->>>>>>> Stashed changes
         self.rect = self.image.get_rect()
         self.rect.x = WIDTH
         self.rect.y = -0.2*HEIGHT  # Top obstacle starts at the top of the screen
@@ -250,11 +241,6 @@ def run():
     all_sprites = pygame.sprite.Group()
     obstacles = pygame.sprite.Group()
     player_group = pygame.sprite.Group()
-<<<<<<< Updated upstream
-    grounds = pygame.sprite.Group()
-
-    player = Player()
-=======
     # grounds = pygame.sprite.Group()
     obstacle_top = Obstacle('assets/level_color.png')
     def temp():
@@ -301,7 +287,6 @@ def run():
         return running, overlap_surf
 
     player = Player(check_collide)
->>>>>>> Stashed changes
     player_group.add(player)
 
     clock = pygame.time.Clock()
