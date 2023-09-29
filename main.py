@@ -2,6 +2,7 @@ import pygame
 import random
 import numpy as np
 import cProfile
+import time
 
 # Initialize pygame
 pygame.init()
@@ -27,6 +28,10 @@ BOUNCE_DELAY = 20
 WHITE = (255, 255, 255)
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
+
+FONT = pygame.font.Font(None, 64)
+WIN_TEXT = FONT.render("You Win!", True, WHITE)
+WIN_TEXT_RECT = WIN_TEXT.get_rect(center=(WIDTH // 2, HEIGHT // 2))
 
 class Player(pygame.sprite.Sprite):
     def set_image(self, img):
@@ -178,7 +183,7 @@ def generate_obstacle_texture(image):
     return image
 
 class Obstacle(pygame.sprite.Sprite):
-    def __init__(self, img = 'assets/level_1.png'):
+    def __init__(self, img = 'assets/level_0.png'):
         super().__init__()
         # if is_top_obstacle:
         self.win_function = lambda:None
@@ -276,7 +281,9 @@ def generate_sky_texture(width, height):
 def sub(u, v):
   return [ u[i]-v[i] for i in range(len(u)) ]
 
-def run():
+def run(level_name):
+    global state
+    state = 0
     global running
     running = True
     screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.DOUBLEBUF) #ChatGPT showed how to do double buffer
@@ -290,14 +297,14 @@ def run():
     obstacles = pygame.sprite.Group()
     player_group = pygame.sprite.Group()
     # grounds = pygame.sprite.Group()
-    obstacle_top = Obstacle('assets/level_2.png')
+    obstacle_top = Obstacle('assets/'+level_name)
 
     def temp():
-        global running
         global state
+        global running
         running = False
         state = 1 #win
-
+    
     obstacle_top.win_function = temp
     all_sprites.add(obstacle_top)
     obstacles.add(obstacle_top)
@@ -392,7 +399,7 @@ def run():
     current_time = pygame.time.get_ticks()
     end_time = 1000
     if state == 1:
-        print("You win!")
+        return 1
     while pygame.time.get_ticks() - current_time < end_time:
         player.unjump()
         player.turn_off_animation()
@@ -422,8 +429,24 @@ if __name__ == "__main__":
     pygame.mixer.music.load('assets/soundtrack.mp3')
     pygame.mixer.music.play(-1)
 
-    while restart == 0:
-        restart = run()
+    level = 0
+
+    while restart >= 0:
+        try:
+            restart = run("level_"+str(level)+".png")
+        except(FileNotFoundError):  
+            restart = -1
+            screen = pygame.display.set_mode((WIDTH, HEIGHT))
+            pygame.display.set_caption("Platformer Game")
+            screen.fill((0, 0, 0))
+            screen.blit(WIN_TEXT, WIN_TEXT_RECT)
+            pygame.display.update()
+            pygame.display.flip()
+            time.sleep(3)
+            break
+        if restart == 1:
+            level += 1
+
 
     profiler.disable()
     profiler.print_stats(sort='cumulative')
