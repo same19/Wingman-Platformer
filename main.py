@@ -348,16 +348,27 @@ def text_screen(txt):
     pygame.display.flip()
 
 if __name__ == "__main__":
+    # initialize pygame stuff
     pygame.init()
     pygame.mixer.init()
-    screen = pygame.display.set_mode((WIDTH, HEIGHT))
+
+    # initialize display, clock
     pygame.display.set_caption("Platformer Game")
-    load_assets()
+    screen = pygame.display.set_mode((WIDTH, HEIGHT))
+    clock = pygame.time.Clock()
+
+    # load music
     pygame.mixer.music.load('assets/soundtrack.mp3')
     pygame.mixer.music.play(-1)
+
+    # load assets
+    load_assets()
+
+    # misc vars
     level = 0
-    clock = pygame.time.Clock()
     restart = 1
+
+    # main game loop
     while restart >= 0:
         if restart == 1:
             text_screen("Level " + str(level + 1))
@@ -371,6 +382,8 @@ if __name__ == "__main__":
             break
         if restart == 1:
             level += 1
+
+    # finish game
     pygame.quit()
 
 '''
