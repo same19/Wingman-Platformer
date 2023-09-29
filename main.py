@@ -90,9 +90,11 @@ class Player(pygame.sprite.Sprite):
 
     def update(self):
         self.rect.y += self.velocity_y * VEL_SCALE * (pygame.time.get_ticks() - self.last_frame)
-        print(pygame.time.get_ticks() - self.last_frame)
-        print(VEL_SCALE * (pygame.time.get_ticks() - self.last_frame))
-        print()
+        print(self.velocity_y * VEL_SCALE * (pygame.time.get_ticks() - self.last_frame))
+        #Progress:
+        #Gliding not working properly in different frame rates
+        #Space bar slows down the program?
+        #still visual glitching regardless of rate and with double buffering active.
         self.updating = False
         if self.dropping:
             self.velocity_y += 3 * GRAVITY * VEL_SCALE * (pygame.time.get_ticks() - self.last_frame)
@@ -280,8 +282,6 @@ def run(level_name, clock):
 
     last_time = pygame.time.get_ticks()
     while running:
-        print(pygame.time.get_ticks() - last_time)
-        print("UP")
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
