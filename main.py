@@ -1,5 +1,6 @@
 import pygame
 import random
+import numpy as np
 import cProfile
 
 # Initialize pygame
@@ -9,7 +10,7 @@ pygame.mixer.init()
 # Constants
 WIDTH = 800
 HEIGHT = 400
-GROUND_HEIGHT = 40
+GROUND_HEIGHT = 200
 PLAYER_SCALE = (80, 100)
 OBSTACLE_WIDTH = 50
 OBSTACLE_HEIGHT = 80
@@ -138,6 +139,42 @@ class Player(pygame.sprite.Sprite):
         self.gliding = False
         self.update_frame(self.frames)
 
+def generate_obstacle_texture(image):
+    green_color = np.array([23, 37, 7])  # Green color in RGB format
+    brown_color = np.array([139, 69, 19])  # Brown color in RGB format
+    image_data = pygame.surfarray.array3d(image)
+    # alphas = pygame.surfarray.array_alpha(image)
+    black_threshold = 10
+    thread_count = 0
+    thread_max_count = 10
+    while thread_count < thread_max_count:
+        break
+        y = random.randint(0,image_data.shape[0]-1)
+        x = random.randint(0,image_data.shape[1]-1)
+        direction = (random.randint(-1,1), random.randint(-1,1))
+        print(image.get_at((y,x)))
+        if np.all(image_data[y,x] == 0) and image.get_at(y,x):
+            print()
+            while np.all(image_data[y,x] == 0) and alphas[y,x] != 255:
+                image_data[y,x] = green_color
+                x += direction[0]
+                y += direction[1]
+                direction = (random.randint(-1,2), random.randint(-1,2))
+        thread_count += 1
+    # for y in range(image_data.shape[0]):
+    #     for x in range(image_data.shape[1]):
+    #         pixel_color = image_data[y, x]
+    #         if np.all(pixel_color < black_threshold):
+    #             # Replace black pixels with green and brown in a pattern
+    #             if (x + y) % 2 == 0:
+    #                 image_data[y, x] = green_color
+    #             else:
+    #                 image_data[y, x] = brown_color
+    # modified_image = pygame.surfarray.make_surface(image_data)
+    # # return modified_image
+    # return pygame.surfarray.make_surface(pygame.surfarray.array3d(image))
+    return image
+
 class Obstacle(pygame.sprite.Sprite):
     def __init__(self, img = 'assets/level_1.png'):
         super().__init__()
@@ -146,7 +183,7 @@ class Obstacle(pygame.sprite.Sprite):
         self.height = random.randint(70, 120)
         # self.image = generate_rock_texture(OBSTACLE_WIDTH, self.height)
         self.scale = (HEIGHT*10, HEIGHT)
-        self.image = pygame.transform.scale(pygame.image.load(img).convert_alpha(), self.scale)
+        self.image = pygame.transform.scale(generate_obstacle_texture(pygame.image.load(img).convert_alpha()), self.scale)
         self.rect = self.image.get_rect()
         self.rect.x = 0
         self.rect.y = 0  # Top obstacle starts at the top of the screen
@@ -158,6 +195,22 @@ class Obstacle(pygame.sprite.Sprite):
         if self.rect.x < -self.scale[0]:
             self.win_function()
             self.kill()
+        # if self.rect.x < -OBSTACLE_WIDTH:
+        #     self.kill()
+
+            
+    # def __init__(self):
+    #     super().__init__()
+    #     self.image = generate_rock_texture(OBSTACLE_WIDTH, OBSTACLE_HEIGHT)
+    #     self.rect = self.image.get_rect()
+    #     self.rect.x = WIDTH
+    #     self.rect.y = HEIGHT - GROUND_HEIGHT - OBSTACLE_HEIGHT
+    #     self.mask = pygame.mask.from_surface(self.image)
+
+    # def update(self):
+    #     self.rect.x -= SPEED
+    #     if self.rect.x < -OBSTACLE_WIDTH:
+    #         self.kill()
 
 """---start of ChatGPT generated code block"""
 def load_assets():
@@ -236,7 +289,7 @@ def run():
     obstacles = pygame.sprite.Group()
     player_group = pygame.sprite.Group()
     # grounds = pygame.sprite.Group()
-    obstacle_top = Obstacle('assets/level_5.png')
+    obstacle_top = Obstacle('assets/level_color.png')
 
     def temp():
         global running
@@ -265,12 +318,14 @@ def run():
             # collide_pt = (collide[0] + obstacle_top.rect.x - player.rect.x, collide[1]+obstacle_top.rect.y - player.rect.y)
             overlap_surf = collide.to_surface(setcolor = (255, 0, 0))
             overlap_surf.set_colorkey((0, 0, 0))
-            net_col_shift = sub(sub(collide.centroid(),offset),player.mask.centroid())
-            if (net_col_shift[0] > 1 and net_col_shift[1] < player.rect.height/4) or net_col_shift[1] < 0:
-                # print(net_col_shift)
-                # print("You died!")
+            net_col = sub(collide.centroid(),offset)
+            net_col_shift = sub(net_col,player.mask.centroid())
+            print(obstacle_top.image.get_at(collide.centroid()))
+            if obstacle_top.image.get_at(collide.centroid()) == (255,0,0,255) or (net_col_shift[0] > 1 and net_col_shift[1] < player.rect.height/4) or net_col_shift[1] < 0:
+                # Death
                 running = False
             else:
+                #Touching ground
                 overlap_point = pygame.sprite.collide_mask(player, obstacle_top)
                 screen_y = overlap_point[1] + player.rect.y
                 player.hit_ground(screen_y - player.rect.bottom+2)
