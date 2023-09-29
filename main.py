@@ -221,9 +221,8 @@ def sub(u, v):
   return [ u[i]-v[i] for i in range(len(u)) ]
 
 def run(level_name, clock):
-    global state
+    global state, running
     state = 0
-    global running
     running = True
     screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.DOUBLEBUF)
     pygame.display.set_caption("Platformer Game")
@@ -236,8 +235,7 @@ def run(level_name, clock):
     obstacle_top = Obstacle('assets/' + level_name)
 
     def win():
-        global state
-        global running
+        global state, running
         running = False
         state = 1
 
@@ -331,9 +329,6 @@ def run(level_name, clock):
     clock.tick(60)
     return 0
 
-running = True
-state = 0
-
 def text_screen(txt):
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption("Platformer Game")
@@ -365,6 +360,8 @@ if __name__ == "__main__":
     # misc vars
     level = 0
     restart = 1
+    running = True
+    state = 0
 
     # main game loop
     while restart >= 0:
