@@ -1,5 +1,6 @@
 import pygame
 import random
+import cProfile
 
 # Initialize pygame
 pygame.init()
@@ -23,23 +24,22 @@ BOUNCE_DELAY = 20
 WHITE = (255, 255, 255)
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
+
 class Player(pygame.sprite.Sprite):
     def set_image(self, img):
         self.image = pygame.transform.scale(img, PLAYER_SCALE)
         self.mask = pygame.mask.from_surface(self.image)
+    
     def __init__(self, collision_function):
         super().__init__()
-        self.collision_function = collision_function
-        self.frames = [
-            pygame.image.load('assets/stick_run1.png').convert_alpha(),
-            pygame.image.load('assets/stick_run2.png').convert_alpha()
-        ]
-        self.gliding_frames = [
-            pygame.image.load('assets/stick_fly1.png').convert_alpha(),
-            pygame.image.load('assets/stick_fly2.png').convert_alpha()
-        ]
+
+        # initialize frames
+        self.frames = [stick_run1, stick_run2]
+        self.gliding_frames = [stick_fly1, stick_fly2]
         self.frame_list = self.frames
         self.current_frame = 0
+
+        self.collision_function = collision_function
         self.set_image(self.frames[self.current_frame])
         self.rect = self.image.get_rect()
         self.rect.x = 50
@@ -55,15 +55,19 @@ class Player(pygame.sprite.Sprite):
         self.is_touching_ground = False
         self.amount_to_move = 0
         self.updating = True
+    
     def turn_on_animation(self):
         self.animate = True
+    
     def turn_off_animation(self):
         self.animate = False
+    
     def update_frame(self, l = None):
         if l != None:
             self.frame_list = l
         self.set_image(self.frame_list[self.current_frame])
         self.rect = self.image.get_rect(center=self.rect.center)
+    
     def hit_ground(self, amount_to_move):
         if not self.touching_ground():
             self.last_time_touched_ground = pygame.time.get_ticks()
@@ -73,10 +77,13 @@ class Player(pygame.sprite.Sprite):
         self.dropping = False
         self.gliding = False  # Reset gliding state when touching the ground
         self.update_frame(self.frames)
+
     def unhit_ground(self):
         self.is_touching_ground = False
+    
     def touching_ground(self):
         return self.is_touching_ground
+
     def update(self):
         self.rect.y += self.velocity_y
         self.updating = False
@@ -102,11 +109,13 @@ class Player(pygame.sprite.Sprite):
                 self.current_frame = (self.current_frame + 1) % len(self.frame_list)
             self.update_frame()
         self.updating = True
+    
     def drop(self):
         if self.jumping or self.gliding:
             self.dropping = True
         self.gliding = False
         self.update_frame(self.frames)
+    
     def new_jump(self):
         if self.touching_ground():#and pygame.time.get_ticks() - self.last_time_touched_ground > BOUNCE_DELAY:
             self.velocity_y = -JUMP_STRENGTH
@@ -150,6 +159,25 @@ class Obstacle(pygame.sprite.Sprite):
             self.win_function()
             self.kill()
 
+"""---start of ChatGPT generated code block"""
+def load_assets():
+    global stick_run1, stick_run2, stick_fly1, stick_fly2
+    stick_run1 = pygame.image.load('assets/stick_run1.png').convert_alpha()
+    stick_run2 = pygame.image.load('assets/stick_run2.png').convert_alpha()
+    stick_fly1 = pygame.image.load('assets/stick_fly1.png').convert_alpha()
+    stick_fly2 = pygame.image.load('assets/stick_fly2.png').convert_alpha()
+
+def run():
+    global running
+    running = True
+    screen = pygame.display.set_mode((WIDTH, HEIGHT))
+    pygame.display.set_caption("Platformer Game")
+    
+    load_assets()  # Load assets after setting the display mode
+
+    # ... rest of the code ...
+
+
 def generate_ground_texture(width, height):
     texture = pygame.Surface((width, height))
     colors = [(139, 69, 19), (160, 82, 45), (185, 102, 58)]  # Different shades of brown for dirt
@@ -172,6 +200,7 @@ def generate_rock_texture(width, height):
 
     return texture
 
+
 def generate_sky_texture(width, height):
     texture = pygame.Surface((width, height))
     top_color = (135, 206, 235)  # Sky blue
@@ -187,15 +216,18 @@ def generate_sky_texture(width, height):
         texture.fill(color, (0, y, width, 1))
 
     return texture
+"""---end of ChatGPT generated code block"""
+
 def sub(u, v):
   return [ u[i]-v[i] for i in range(len(u)) ]
-running = True
-state = 0
+
 def run():
     global running
     running = True
-    screen = pygame.display.set_mode((WIDTH, HEIGHT))
+    screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.DOUBLEBUF) #ChatGPT showed how to do double buffer
     pygame.display.set_caption("Platformer Game")
+
+    load_assets()
 
     sky_texture = generate_sky_texture(WIDTH, HEIGHT)
     ground_texture = generate_ground_texture(WIDTH, GROUND_HEIGHT)
@@ -205,14 +237,17 @@ def run():
     player_group = pygame.sprite.Group()
     # grounds = pygame.sprite.Group()
     obstacle_top = Obstacle('assets/level_5.png')
+
     def temp():
         global running
         global state
         running = False
         state = 1 #win
+
     obstacle_top.win_function = temp
     all_sprites.add(obstacle_top)
     obstacles.add(obstacle_top)
+    
     def check_collide(running = True):
         player_mask = player.mask
         obstacle_mask = obstacle_top.mask
@@ -320,13 +355,26 @@ def run():
     # pygame.quit()
     return 0
 
+running = True
+state = 0
+
 if __name__ == "__main__":
+    profiler = cProfile.Profile()
+    profiler.enable()
+
     restart = 0
-    pygame.mixer.music.load('assets/soundtrack.mp3')  
+
+    # ChatGPT showed how to implement soundtrack
+    pygame.mixer.music.load('assets/soundtrack.mp3')
     pygame.mixer.music.play(-1)
 
     while restart == 0:
         restart = run()
+
+    profiler.disable()
+    profiler.print_stats(sort='cumulative')
+    profiler.dump_stats("stats/profile_results.txt")
+
 
 
 
