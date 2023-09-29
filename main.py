@@ -428,10 +428,6 @@ if __name__ == "__main__":
 
     profiler.disable()
     profiler.print_stats(sort='cumulative')
-    profiler.dump_stats("stats/profile_results.txt")
-
-
-
 
 # base ChatGPT Prompt:
 #We are creating a platform game with obstacles where the individual can run and jump. Please code a simple platformer with object oriented python where the user is perpetually running when they're not jumping. It should use pygame. 
