@@ -330,14 +330,12 @@ def run(level_name, clock):
     return 0
 
 def text_screen(txt):
-    screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.DOUBLEBUF)
     screen.fill(SKY_BLUE)
     FONT = pygame.font.Font(None, 64)
     WIN_TEXT = FONT.render(txt, True, BLACK)
     WIN_TEXT_RECT = WIN_TEXT.get_rect(center=(WIDTH // 2, HEIGHT // 2))
     screen.blit(WIN_TEXT, WIN_TEXT_RECT)
 
-    pygame.display.update()
     pygame.display.flip()
 
 if __name__ == "__main__":
