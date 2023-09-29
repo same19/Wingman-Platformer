@@ -228,8 +228,6 @@ def run(level_name, clock):
     screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.DOUBLEBUF)
     pygame.display.set_caption("Platformer Game")
 
-    load_assets()
-
     sky_texture = generate_sky_texture(WIDTH, HEIGHT)
 
     all_sprites = pygame.sprite.Group()
