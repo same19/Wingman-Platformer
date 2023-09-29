@@ -10,13 +10,15 @@ pygame.mixer.init()
 # Constants
 WIDTH = 800
 HEIGHT = 400
-GROUND_HEIGHT = 200
+START_X = 50
+BLOCK_HEIGHT = 20
 PLAYER_SCALE = (80, 100)
 OBSTACLE_WIDTH = 50
 OBSTACLE_HEIGHT = 80
-SPEED = 5
-GRAVITY = 1
-JUMP_STRENGTH = 20
+SPEED = 3.5
+GRAVITY = 0.9
+JUMP_HEIGHT = 8.5*BLOCK_HEIGHT
+JUMP_STRENGTH = (2*GRAVITY * JUMP_HEIGHT) ** (0.5)
 GLIDE_CONSTANT = 5
 GLIDE_VELOCITY_Y = 1
 BOUNCE_DELAY = 20
@@ -43,8 +45,8 @@ class Player(pygame.sprite.Sprite):
         self.collision_function = collision_function
         self.set_image(self.frames[self.current_frame])
         self.rect = self.image.get_rect()
-        self.rect.x = 50
-        self.rect.y = HEIGHT - GROUND_HEIGHT - self.rect.height
+        self.rect.x = START_X
+        self.rect.y = HEIGHT - 10*BLOCK_HEIGHT - self.rect.height
         self.velocity_y = 0
         self.jumping = False
         self.animation_time = 0
@@ -192,7 +194,7 @@ class Obstacle(pygame.sprite.Sprite):
 
     def update(self):
         self.rect.x -= SPEED
-        if self.rect.x < -self.scale[0]:
+        if self.rect.x <= -self.scale[0] + START_X:
             self.win_function()
             self.kill()
         # if self.rect.x < -OBSTACLE_WIDTH:
@@ -283,13 +285,12 @@ def run():
     load_assets()
 
     sky_texture = generate_sky_texture(WIDTH, HEIGHT)
-    ground_texture = generate_ground_texture(WIDTH, GROUND_HEIGHT)
 
     all_sprites = pygame.sprite.Group()
     obstacles = pygame.sprite.Group()
     player_group = pygame.sprite.Group()
     # grounds = pygame.sprite.Group()
-    obstacle_top = Obstacle('assets/level_color.png')
+    obstacle_top = Obstacle('assets/level_2.png')
 
     def temp():
         global running
@@ -310,7 +311,7 @@ def run():
         offset_y = player.rect.y - obstacle_top.rect.y
 
         # Check for collision
-        overlap_surf = ground_texture
+        overlap_surf = sky_texture
         if pygame.sprite.collide_mask(player, obstacle_top):
             offset = (offset_x, offset_y)
             # overlap_mask = mask1.overlap_mask(mask2, (offset_x, offset_y))
@@ -400,8 +401,6 @@ def run():
         screen.blit(sky_texture, (0, 0))
         all_sprites.draw(screen)
         player_group.draw(screen)
-        screen.blit(ground_texture, (0, HEIGHT - GROUND_HEIGHT))
-        #pygame.draw.rect(screen, (0, 0, 0), [0, HEIGHT - GROUND_HEIGHT, WIDTH, GROUND_HEIGHT])
 
         
         pygame.display.flip()
