@@ -176,7 +176,6 @@ def load_assets():
     stick_fly1 = pygame.image.load('assets/stick_fly1.png').convert_alpha()
     stick_fly2 = pygame.image.load('assets/stick_fly2.png').convert_alpha()
 
-
 def generate_ground_texture(width, height):
     texture = pygame.Surface((width, height))
     colors = [(139, 69, 19), (160, 82, 45), (185, 102, 58)]  # Different shades of brown for dirt
@@ -198,7 +197,6 @@ def generate_rock_texture(width, height):
             texture.set_at((x, y), random_color)
 
     return texture
-
 
 def generate_sky_texture(width, height):
     texture = pygame.Surface((width, height))
@@ -281,8 +279,6 @@ def run(level_name, clock):
                 return -1
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE or event.key == pygame.K_UP:
-                    if not space_held:
-                        space_pressed_time = pygame.time.get_ticks()
                     space_held = True
                     player.new_jump()
                 elif event.key == pygame.K_DOWN:
