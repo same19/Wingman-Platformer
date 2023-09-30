@@ -20,7 +20,6 @@ JUMP_HEIGHT = 8.5*BLOCK_HEIGHT
 JUMP_STRENGTH = (2*GRAVITY * JUMP_HEIGHT) ** (0.5)
 FRAME_RATE = 60
 VEL_SCALE = 0.06
-GLIDE_CONSTANT = 5
 GLIDE_VELOCITY_Y = 1
 BOUNCE_DELAY = 20
 
@@ -90,7 +89,7 @@ class Player(pygame.sprite.Sprite):
 
     def update(self):
         self.rect.y += self.velocity_y * VEL_SCALE * (pygame.time.get_ticks() - self.last_frame)
-        print(self.velocity_y * VEL_SCALE * (pygame.time.get_ticks() - self.last_frame))
+        # print(self.velocity_y * VEL_SCALE * (pygame.time.get_ticks() - self.last_frame))
         #Progress:
         #Gliding not working properly in different frame rates
         #Space bar slows down the program?
@@ -322,6 +321,9 @@ def run(level_name, clock):
     return 0
 
 def text_screen(txt):
+    #For some reason this code is needed twice
+    pygame.display.set_caption("Platformer Game")
+    screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.DOUBLEBUF)
     screen.fill(SKY_BLUE)
     FONT = pygame.font.Font(None, 64)
     WIN_TEXT = FONT.render(txt, True, BLACK)
@@ -355,16 +357,17 @@ if __name__ == "__main__":
 
     # main game loop
     while restart >= 0:
-        if restart == 1:
-            text_screen("Level " + str(level + 1))
-            time.sleep(2)
         try:
-            restart = run("level_" + str(level) + ".png", clock)
+            _ = pygame.image.load("assets/level_" + str(level) + ".png").convert_alpha()
         except FileNotFoundError:
             restart = -1
             text_screen("You Win!")
             time.sleep(3)
             break
+        if restart == 1:
+            text_screen("Level " + str(level + 1))
+            time.sleep(2)
+        restart = run("level_" + str(level) + ".png", clock)
         if restart == 1:
             level += 1
 
