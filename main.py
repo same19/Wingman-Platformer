@@ -1,10 +1,11 @@
 """---start of ChatGPT generated code block---"""
-"""Everything is edited by both ChatGPT and human authors"""
+"""This file was edited by both ChatGPT and human authors"""
 import pygame
 import random
 import numpy as np
 import cProfile
 import time
+from level_select import level_select_screen
 
 # Constants
 WIDTH = 800
@@ -277,6 +278,9 @@ def run(level_name, clock):
                 running = False
                 return -1
             if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    running = False
+                    return 2
                 if event.key == pygame.K_SPACE or event.key == pygame.K_UP:
                     space_held = True
                     player.new_jump()
@@ -350,25 +354,43 @@ if __name__ == "__main__":
     load_assets()
 
     # misc vars
-    level = 0
-    restart = 1
-    running = True
-    state = 0
-
-    # main game loop
-    while restart >= 0:
+    level_does_load = True
+    level_load_count = 0
+    levels_completed = []
+    while level_does_load == True:
         try:
-            _ = pygame.image.load("assets/level_" + str(level) + ".png").convert_alpha()
+            pygame.image.load("assets/level_" + str(level_load_count) + ".png").convert_alpha()
         except FileNotFoundError:
+            level_does_load = False
+        else:
+            levels_completed.append(False)
+            level_load_count += 1
+    # main game loop
+    level = 0
+    restart = 2
+    running = True
+    while restart >= 0:
+        if restart == 2:
+            level = level_select_screen(levels_completed)
+            if (level >= 0):
+                restart = 1
+            else:
+                restart = -1
+                break
+        if levels_completed == [True for i in levels_completed]:
             restart = -1
             text_screen("You Win!")
-            time.sleep(3)
-            break
-        if restart == 1:
+            time.sleep(2)
+            restart = 2
+        elif restart == 1 and level < len(levels_completed):
             text_screen("Level " + str(level + 1))
             time.sleep(2)
-        restart = run("level_" + str(level) + ".png", clock)
+        elif restart == 1:
+            restart = 2
+        if restart != 2:
+            restart = run("level_" + str(level) + ".png", clock)
         if restart == 1:
+            levels_completed[level] = True
             level += 1
 
     # finish game
